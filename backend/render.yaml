@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: ai-debugger-backend
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: GOOGLE_API_KEY
+        scope: run
+        sync: false
+      - key: REDIS_HOST
+        value: redis-instance.internal
+      - key: REDIS_PORT
+        value: 6379
+      - key: REDIS_DB
+        value: 0
+      - key: CHROMA_PATH
+        value: /var/data/chroma_index
