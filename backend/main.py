@@ -93,16 +93,19 @@ async def initialize():
     """One-time setup: index repo"""
     from utils.git_loader import GitLoader
     
-    repo_path = os.getenv("GITHUB_REPO_PATH", ".")
+    repo_path = os.getenv("GITHUB_REPO_PATH", "..")
     loader = GitLoader(repo_path)
     
+    # Initialize collections
+    rag.embedder.create_collections()
+
     # Index files
     files = loader.get_file_list()
     rag.embedder.index_code_files(files)
     
     # Index incidents
     import json
-    with open("data/incidents.json") as f:
+    with open("data/incidents/incidents.json") as f:
         incidents = json.load(f)
     rag.embedder.index_incidents(incidents)
     

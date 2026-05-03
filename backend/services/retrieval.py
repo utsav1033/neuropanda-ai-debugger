@@ -1,6 +1,8 @@
-import json
-from services.embedding import EmbeddingService
-from services.cache import CacheService
+# backend/services/retrieval.py
+
+from os import getenv
+from .embedding import EmbeddingService
+from .cache import CacheService
 
 class RAGPipeline:
     def __init__(self):
@@ -8,58 +10,70 @@ class RAGPipeline:
         self.cache = CacheService()
     
     def retrieve_context(self, error_text, service_name):
-        """Retrieve relevant context for an error"""
-        
-        # 1. Embed the query
-        query_embedding = self.embedder.embed_text(error_text)
-        
-        # 2. Search collections (handling potential empty collections)
-        try:
-            similar_code = self.embedder.search(query_embedding, "code_files", top_k=3)
-        except Exception:
-            similar_code = {"documents": [[]]}
-            
-        try:
-            similar_incidents = self.embedder.search(query_embedding, "incidents", top_k=2)
-        except Exception:
-            similar_incidents = {"documents": [[]]}
-        
-        # 3. Get recent commits from cache
-        recent_commits = self.cache.get_recent_commits(service_name) or []
-        
-        return {
-            "similar_code": similar_code.get("documents", [[]])[0] if similar_code else [],
-            "similar_incidents": similar_incidents.get("documents", [[]])[0] if similar_incidents else [],
-            "related_commits": recent_commits,
-            "error": error_text
+        """Main RAG function — degrades gracefully if vector DB is unavailable"""
+
+        # 1. Embed the error (may return None if API fails)
+        error_embedding = self.embedder.embed_text(error_text)
+
+        # 2. Search Vector DB (returns empty if embedding is None or DB uninitialized)
+        similar_code      = self.embedder.search(error_embedding, "code_files",  top_k=5)
+        similar_incidents = self.embedder.search(error_embedding, "incidents",   top_k=3)
+        related_commits   = self.embedder.search(error_embedding, "commits",     top_k=5)
+
+        # 3. Check Redis cache (returns [] if Redis is down)
+        common_errors  = self.cache.get_common_errors(service_name)
+        recent_commits = self.cache.get_recent_commits(service_name)
+
+        # 4. Build context
+        def flatten(results):
+            docs = results.get("documents", [])
+            # ChromaDB returns list-of-lists when querying
+            if docs and isinstance(docs[0], list):
+                return docs[0]
+            return docs
+
+        context = {
+            "error": error_text,
+            "similar_code":      flatten(similar_code)[:3],
+            "similar_incidents": flatten(similar_incidents)[:2],
+            "related_commits":   flatten(related_commits)[:3],
+            "common_errors":     common_errors or [],
+            "recent_commits":    recent_commits or []
         }
-        
-    def build_prompt(self, full_text, context):
-        """Build the prompt for the reasoning engine"""
-        
-        code_context = "\n---\n".join(context.get("similar_code", []))
-        incident_context = "\n---\n".join(context.get("similar_incidents", []))
-        
-        prompt = f"""
-You are an expert AI debugger. Analyze the following error and provide a structured JSON response.
 
-ERROR DETAILS:
-{full_text}
+        return context
 
-RELATED CODE FILES:
-{code_context}
+    
+    def build_prompt(self, error_text, context):
+        """Format context into LLM prompt"""
+        prompt = f"""You are a debugging expert. Analyze this production error and provide root cause analysis.
 
-PAST SIMILAR INCIDENTS:
-{incident_context}
+ERROR:
+{error_text}
 
-Please provide your analysis in the exact following JSON format:
+RELATED CODE:
+{chr(10).join(context['similar_code'])}
+
+SIMILAR PAST INCIDENTS:
+{chr(10).join(context['similar_incidents'])}
+
+RELATED COMMITS:
+{chr(10).join(context['related_commits'])}
+
+Based on the above context, provide analysis in this JSON format:
 {{
-  "root_cause": "Detailed explanation of the root cause",
-  "culprit_file": "filename.py",
-  "culprit_line": 123,
-  "analysis": "Step-by-step reasoning",
-  "alternative_hypotheses": ["alt 1", "alt 2"],
-  "next_steps": ["step 1", "step 2"]
+  "root_cause": "Clear hypothesis about what caused the error (1-2 sentences)",
+  "affected_file": "Path to the most likely file",
+  "affected_line": "Line number if identifiable",
+  "confidence": 0.75,
+  "alternative_hypotheses": [
+    {{"hypothesis": "...", "probability": 0.15}},
+    {{"hypothesis": "...", "probability": 0.10}}
+  ],
+  "reasoning": "Why you think this is the root cause",
+  "next_steps": ["Step 1 to debug", "Step 2 to verify"]
 }}
-"""
+
+Respond ONLY with valid JSON, no markdown or extra text."""
+        
         return prompt
