@@ -4,6 +4,8 @@
 import { useState } from 'react'
 import axios from 'axios'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+
 export default function Home() {
   const [formData, setFormData] = useState({
     error_text: '',
@@ -35,7 +37,7 @@ export default function Home() {
 
     try {
       const response = await axios.post(
-        'http://localhost:8000/analyze_error',
+        `${API_URL}/analyze_error`,
         formData
       )
       setResult(response.data)
