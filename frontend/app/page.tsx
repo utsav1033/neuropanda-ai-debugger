@@ -82,8 +82,16 @@ export default function Home() {
             backgroundClip: 'text',
             letterSpacing: '0.05em',
           }}>
-            AI DEBUGGER
+            NEUROPANDA
           </h1>
+          <div style={{
+            fontFamily: 'var(--font-game)',
+            fontSize: '0.7rem',
+            letterSpacing: '0.2em',
+            color: 'var(--neon-green)',
+            marginTop: '4px',
+            marginBottom: '4px',
+          }}>AI DEBUGGER</div>
           <p style={{
             fontFamily: 'var(--font-mono)',
             color: 'var(--text-secondary)',
@@ -227,7 +235,7 @@ export default function Home() {
           marginTop: '1.5rem',
           letterSpacing: '0.1em',
         }}>
-          POWERED BY RAG · CHROMADB · GEMINI AI · v1.0.0
+          NEUROPANDA · RAG + GEMINI AI · v1.0.0
         </p>
       </div>
     </div>

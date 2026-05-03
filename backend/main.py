@@ -12,7 +12,7 @@ from services.confidence import ConfidenceScorer
 
 load_dotenv()
 
-app = FastAPI(title="AI Debugger")
+app = FastAPI(title="NeuroPanda - AI Debugger")
 
 # CORS
 app.add_middleware(

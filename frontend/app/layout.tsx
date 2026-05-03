@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "AI Debugger — Root Cause Analysis",
+  title: "NeuroPanda — AI Debugger",
   description: "Paste your error and context. We'll find the root cause using RAG + Gemini AI.",
 };
 
