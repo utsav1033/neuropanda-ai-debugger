@@ -1,4 +1,4 @@
-# 🔍 AI Debugger
+# NeuroPanda - AI Debugger
 
 **Production error debugging powered by RAG + LLM**
 
