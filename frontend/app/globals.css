@@ -1,26 +1,125 @@
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;600;700;900&family=Share+Tech+Mono&family=Rajdhani:wght@400;500;600;700&display=swap');
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg-primary: #050810;
+  --bg-secondary: #0a0f1e;
+  --bg-card: #0d1529;
+  --bg-input: #060c1a;
+
+  --neon-cyan: #00f5ff;
+  --neon-green: #00ff88;
+  --neon-red: #ff003c;
+  --neon-purple: #bf00ff;
+  --neon-orange: #ff6b00;
+  --neon-yellow: #ffe100;
+
+  --border-dim: rgba(0, 245, 255, 0.15);
+  --border-glow: rgba(0, 245, 255, 0.5);
+
+  --text-primary: #e0f0ff;
+  --text-secondary: #7aa5cc;
+  --text-muted: #3d5a7a;
+
+  --font-game: 'Orbitron', monospace;
+  --font-mono: 'Share Tech Mono', monospace;
+  --font-body: 'Rajdhani', sans-serif;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  min-height: 100vh;
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Scanline overlay on body */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 245, 255, 0.015) 2px,
+    rgba(0, 245, 255, 0.015) 4px
+  );
+  pointer-events: none;
+  z-index: 9999;
 }
+
+/* Grid bg pattern */
+body::after {
+  content: '';
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  background-image:
+    linear-gradient(rgba(0, 245, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 245, 255, 0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg-secondary); }
+::-webkit-scrollbar-thumb {
+  background: var(--neon-cyan);
+  border-radius: 3px;
+  box-shadow: 0 0 6px var(--neon-cyan);
+}
+
+/* Neon text glow */
+.glow-cyan { text-shadow: 0 0 10px var(--neon-cyan), 0 0 30px var(--neon-cyan); }
+.glow-green { text-shadow: 0 0 10px var(--neon-green), 0 0 30px var(--neon-green); }
+.glow-red   { text-shadow: 0 0 10px var(--neon-red),  0 0 30px var(--neon-red); }
+
+/* Neon box glow */
+.box-glow-cyan   { box-shadow: 0 0 16px rgba(0,245,255,0.25), inset 0 0 16px rgba(0,245,255,0.05); }
+.box-glow-green  { box-shadow: 0 0 16px rgba(0,255,136,0.25), inset 0 0 16px rgba(0,255,136,0.05); }
+.box-glow-red    { box-shadow: 0 0 16px rgba(255,0,60,0.25),  inset 0 0 16px rgba(255,0,60,0.05); }
+.box-glow-purple { box-shadow: 0 0 16px rgba(191,0,255,0.25), inset 0 0 16px rgba(191,0,255,0.05); }
+
+/* Corner clip decoration */
+.clip-corner {
+  clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 0 100%);
+}
+.clip-corner-sm {
+  clip-path: polygon(0 0, calc(100% - 10px) 0, 100% 10px, 100% 100%, 0 100%);
+}
+
+/* Pulse animation */
+@keyframes pulse-glow {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+@keyframes scan {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+@keyframes flicker {
+  0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+  20%, 24%, 55% { opacity: 0.7; }
+}
+@keyframes slide-in-up {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes progress-fill {
+  from { width: 0%; }
+  to   { width: var(--target-width); }
+}
+
+.animate-slide-in { animation: slide-in-up 0.4s ease forwards; }
+.animate-flicker   { animation: flicker 3s infinite; }
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
