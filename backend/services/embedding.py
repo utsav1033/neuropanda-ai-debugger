@@ -15,23 +15,39 @@ class EmbeddingService:
             print(f"⚠️  ChromaDB unavailable: {e}")
 
     def embed_text(self, text):
-        """Embed using Gemini text-embedding-004 via REST API"""
-        url = (
-            "https://generativelanguage.googleapis.com/v1beta/models"
-            f"/text-embedding-004:embedContent?key={self.api_key}"
-        )
-        payload = {
-            "model": "models/text-embedding-004",
-            "content": {"parts": [{"text": text}]},
-            "taskType": "RETRIEVAL_DOCUMENT"
-        }
-        try:
-            response = requests.post(url, json=payload, timeout=10)
-            response.raise_for_status()
-            return response.json()["embedding"]["values"]
-        except Exception as e:
-            print(f"⚠️  Embedding failed (returning None): {e}")
-            return None
+        """Embed using Gemini via REST API"""
+        # Try models in order of preference
+        models = [
+            "text-embedding-004",
+            "gemini-embedding-exp-03-07",
+            "embedding-001",
+        ]
+        for model in models:
+            url = (
+                "https://generativelanguage.googleapis.com/v1beta/models"
+                f"/{model}:embedContent?key={self.api_key}"
+            )
+            # Minimal payload — taskType omitted (optional, causes 404 in some regions)
+            payload = {
+                "content": {"parts": [{"text": text}]}
+            }
+            try:
+                response = requests.post(url, json=payload, timeout=10)
+                if response.status_code == 200:
+                    print(f"✅ Embedding using: {model}")
+                    return response.json()["embedding"]["values"]
+                elif response.status_code in (404, 400):
+                    continue
+                else:
+                    response.raise_for_status()
+            except requests.exceptions.HTTPError:
+                continue
+            except Exception as e:
+                print(f"⚠️  Embedding error: {e}")
+                return None
+
+        print("⚠️  No embedding model available — vector search disabled")
+        return None
 
     def search(self, query_embedding, collection_name, top_k=5):
         """Search a collection — returns empty result if unavailable"""

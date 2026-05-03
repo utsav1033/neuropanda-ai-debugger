@@ -1,18 +1,14 @@
 services:
   - type: web
-    name: ai-debugger-backend
+    name: neuropanda-backend
     runtime: python
+    rootDir: backend
     buildCommand: pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: GOOGLE_API_KEY
-        scope: run
-        sync: false
-      - key: REDIS_HOST
-        value: redis-instance.internal
-      - key: REDIS_PORT
-        value: 6379
-      - key: REDIS_DB
-        value: 0
+        sync: false          # Set manually in Render dashboard
+      - key: REDIS_URL
+        sync: false          # Optional: paste Redis Cloud URL here if you have one
       - key: CHROMA_PATH
-        value: /var/data/chroma_index
+        value: ./data/chroma_index
